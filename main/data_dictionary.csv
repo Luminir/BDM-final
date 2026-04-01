@@ -1,0 +1,35 @@
+column_name,data_type,description,unit,example
+datetime,datetime64,Timestamp (hourly),UTC,2024-02-14 09:00:00
+pm25,float64,PM2.5 concentration,ug/m3,35.2
+source,object,PM2.5 source label,-,OpenAQ
+temperature,float64,Air temperature,degC,18.5
+humidity,float64,Relative humidity,%,65
+dew_point,float64,Dew point temperature,degC,12.3
+precipitation,float64,Total precipitation,mm,0.0
+rain,float64,Rain-only precipitation,mm,0.0
+pressure_msl,float64,Mean sea level pressure,hPa,1013.2
+surface_pressure,float64,Surface pressure,hPa,1008.5
+cloud_cover,float64,Cloud cover,%,45
+wind_speed,float64,Wind speed,m/s,2.1
+wind_direction,float64,Wind direction,degrees,180
+wind_gusts,float64,Wind gust speed,m/s,4.2
+year,int64,Calendar year,-,2024
+month,int64,Month (1-12),-,2
+day,int64,Day of month (1-31),-,7
+hour,int64,Hour of day (0-23),-,14
+day_of_week,int64,"Day of week (0=Mon, 6=Sun)",-,2
+is_weekend,int64,Weekend indicator (0/1),-,0
+season,object,Season label (dry/wet),-,dry
+is_dry_season,int64,Dry season indicator (0/1),-,1
+pm25_lag1,float64,PM2.5 from 1 hour earlier,ug/m3,34.8
+pm25_lag24,float64,PM2.5 from 24 hours earlier,ug/m3,38.1
+pm25_lag168,float64,PM2.5 from 168 hours earlier,ug/m3,32.5
+pm25_rolling_3h,float64,Rolling PM2.5 mean over 3 hours,ug/m3,35.6
+pm25_rolling_24h,float64,Rolling PM2.5 mean over 24 hours,ug/m3,36.2
+pm25_rolling_7d,float64,Rolling PM2.5 mean over 7 days,ug/m3,34.9
+pm25_rolling_24h_std,float64,Rolling PM2.5 standard deviation over 24 hours,ug/m3,5.3
+wind_u,float64,U-component of wind vector,m/s,-1.2
+wind_v,float64,V-component of wind vector,m/s,1.8
+temp_humidity,float64,Temperature-humidity interaction feature,degC*%,1202.5
+pressure_diff,float64,Pressure change from previous timestamp,hPa,0.3
+is_raining,int64,Rain indicator (0/1),-,0
