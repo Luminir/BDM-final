@@ -173,97 +173,160 @@
 
 # **Our Project Which has been approved**
 
-# **A. Team Information**
+## A. Team Information
 
-> 1\. Trần Nam Sơn - 2301140089
->
-> 2\. Nguyễn Đức Mạnh - 2301140061
->
-> 3\. Đỗ Hoàng Khôi - 2301140054
+1. Trần Nam Sơn - 2301140089  
+2. Nguyễn Đức Mạnh - 2301140061  
+3. Đỗ Hoàng Khôi - 2301140054  
 
-# **B. Project Proposal**
+---
 
-**Title:** Forecasting Hourly PM2.5 Air Pollution in Hanoi: Data-Driven Evidence for Environmental Advocacy & Policy Action
+## B. Project Proposal
 
-**Track (from the list):** Time Series Mining & Forecasting (with elements of Data Preparation & Cleaning)
+### Title
+**Forecasting Hourly PM2.5 Air Pollution in Hanoi: Time-Series Mining for Student Health & Daily Planning**
 
-**Research question:** Can we build accurate 24-hour and 168-hour forecasts of hourly PM2.5 levels in Hanoi, and what key seasonal/weather patterns drive pollution spikes? How can these patterns and forecasts support data-driven environmental advocacy, policy recommendations, and public health awareness campaigns?
+### Track
+Time Series Mining & Forecasting (with elements of Data Preparation & Cleaning)
 
-**Why we care (insight):** Hanoi faces severe seasonal air pollution (PM2.5 often >100 µg/m³ in dry seasons), yet most generic weather apps merely report forecasts without explaining *why* pollution spikes occur or *when* intervention is most critical.
+---
 
-This project addresses a gap: we provide **data-backed evidence for environmental activists, NGOs (e.g., Clean Air Initiative Vietnam), and policymakers** to:
-- Quantify which weather/seasonal patterns drive dangerous pollution spikes
-- Highlight high-risk periods (dry season, weekend traffic effects) for targeted campaigns
-- Demonstrate effectiveness of pollution control measures through forecast vs. actual comparison
-- Support evidence-based policy arguments for emission reduction regulations
-- Raise public awareness by explaining that pollution is *predictable and driven by identifiable factors*
+### Research Question
+Can we build accurate multi-step (24–168 hour) forecasts of hourly PM2.5 levels in Hanoi using historical air quality and weather data, and what key seasonal/weather patterns drive dangerous pollution spikes that impact students’ outdoor activities, commuting, mask usage, and study routines?
 
-Unlike generic forecasts, this analysis emphasizes **interpretability and actionability for advocacy**, not just accuracy. Our insights translate into plain-language recommendations for students, workers, and policymakers.
+---
 
-**Dataset (source + description):**
+### Why We Care (Insight)
+As a student living and studying in Hanoi, I face toxic air (PM2.5 often >100 µg/m³ in winter/dry seasons) that forces decisions like skipping outdoor exercise, wearing masks to class, or staying indoors.  
 
--   Source:
-    <https://www.kaggle.com/datasets/diabolicfox/hanoi-air-quality-pm2-5-weather-data-2024-2026>
+Generic apps provide forecasts but rarely explain local drivers (e.g., dry winds + no rain = spikes; rain after pollution buildup = sharp drops).  
 
--   Description: 14,451 hourly records from Feb 2024 -- Jan 2026
-    (recent, relevant to current Hanoi conditions). Target variable:
-    PM2.5 (µg/m³). Includes 29 features: temporal (hour, day_of_week,
-    is_dry_season, etc.), lag features (PM2.5_lag1/24/168, rolling
-    averages), and 15+ weather variables (temperature, humidity, wind
-    speed/direction, precipitation, pressure, cloud cover, etc.). Size
-    \~1.27 MB CSV, appears clean (no missing values reported), sourced
-    from OpenAQ/WAQI stations + Open-Meteo weather API. License: public
-    domain/CC0.
+This project uncovers actionable, Hanoi-specific patterns so students can plan better and reduce health risks.  
 
--   Privacy/ethics: No issues -- open environmental data, no personal
-    info.
+It matters for public health in Vietnam’s cities, where air pollution is a growing crisis, and demonstrates how time-series data mining turns raw sensor data into practical, life-improving insights.
 
-**Methods (pipeline + algorithms):**
+---
 
-**Pipeline:**
-1. **Preprocessing & Cleaning:** Load CSV with pandas, set datetime index, **recreate all lag/rolling features from scratch** (lag-1, lag-24, lag-168 hours using only past values to prevent leakage), add Vietnamese holiday flags (Tet, National Day, etc.). EDA: time decomposition (trend/seasonal/residual), correlation heatmaps, seasonal patterns by hour/day/month.
+### Dataset (Source + Description)
 
-2. **Modeling (Time Series track focus):**
-   - **Baseline:** Persistence (naive) and seasonal naïve forecasts → quantify improvement target
-   - **Prophet:** Captures trend, seasonality, holidays → interpretable patterns for advocacy
-   - **LSTM (PyTorch):** Detects non-linear weather-pollution interactions → tests complexity
-   - **Horizon:** Primary = 24-hour (daily planning); secondary = 168-hour (weekly outlook)
-   - **Leakage Prevention:** Train/test split strictly by date (last 20% hold-out); no future values in training
+**Source:**  
+https://www.kaggle.com/datasets/diabolicfox/hanoi-air-quality-pm2-5-weather-data-2024-2026  
 
-**Tools:** Python (pandas, numpy, matplotlib/seaborn, statsmodels, prophet, torch), Jupyter Notebook
+**Description:**  
+- 14,451 hourly records (Feb 2024 – Jan 2026)  
+- Target variable: PM2.5 (µg/m³)  
+- 29 features including:
+  - Temporal: hour, day_of_week, is_dry_season  
+  - Lag features: PM2.5_lag1, lag24, lag168  
+  - Rolling averages  
+  - Weather variables: temperature, humidity, wind speed/direction, precipitation, pressure, cloud cover, etc.  
 
-**Evaluation (metrics + baseline):**
+- File size: ~1.27 MB CSV  
+- Data quality: appears clean (no missing values reported)  
+- Sources: OpenAQ / WAQI + Open-Meteo API  
+- License: Public domain / CC0  
 
-- **Accuracy Metrics:** RMSE, MAE, MAPE for 24-hour and 168-hour forecasts; R²
-- **Baseline Comparison:** Persistence vs. Prophet vs. LSTM; target ≥20% RMSE reduction from naive
-- **Setup:** Time-based train/test split (Feb 2024 – Sep 2025 training, Oct 2025 – Jan 2026 testing); no leakage
-- **Advocacy Analysis:** Error patterns by season, high-pollution event detection, feature importance for policy messaging
+---
 
-**Expected insights/outcomes:**
+### Privacy / Ethics
+No issues – open environmental data, no personal information involved.
 
-**Hypotheses to Test (not predetermined conclusions):**
-- **H1:** Seasonal patterns (dry vs. wet) significantly predict PM2.5 spikes → informs campaign timing
-- **H2:** Weather variables (wind, humidity, precipitation) are stronger predictors in certain seasons → supports seasonal policy strategies
-- **H3:** Prophet captures ≥70% of variance; LSTM adds 5–15% → indicates non-linear complexity
-- **H4:** Weekend/holiday anomalies modify pollution levels → quantifies traffic-pollution link
-- **H5:** High-pollution events (PM2.5 > 100 µg/m³) are forecastable → enables public health alerts
+---
 
-**Deliverables:**
-- Full technical report with hypothesis results
-- Reproducible Jupyter notebook with all code and visualizations
-- "Findings for Activists & Policymakers" summary (plain language)
-- Seasonal error analysis and forecast visualization plots
-- GitHub repo with documentation
+### Methods (Pipeline + Algorithms)
 
-**Broader Impact:** Evidence-based framework for environmental advocacy and policy in Hanoi
+#### Pipeline
 
-**Risks & Backup Plan:**
+**1. Preprocessing & Cleaning**
+- Load data using pandas (or PySpark for scalability)
+- Set datetime index  
+- Recreate lag and rolling features from scratch  
+- Add Vietnamese holiday flags (e.g., Tet, National Day)
 
-- **Risk 1:** Dataset is pre-engineered (limited raw cleaning)
-  - **Mitigation:** Recreate all lag/rolling features from scratch (demonstrated in notebook)
+**2. Exploratory Data Analysis (EDA)**
+- Time series decomposition (trend / seasonal / residual)
+- Correlation heatmaps  
+- Seasonality plots (hour / day / season)
 
-- **Risk 2:** Dataset unavailable or corrupt
-  - **Backup:** Use OpenAQ historical data (https://www.kaggle.com/datasets/nitirajkulkarni/hanoi-vn-1581130)
+---
 
-- **Risk 3:** Project scope overruns
-  - **Mitigation:** Narrow to Prophet + LSTM only; focus on interpretability over accuracy
+#### Modeling (Time Series Focus)
+
+**Baselines**
+- Persistence forecast  
+- Seasonal naïve  
+
+**Classical Models**
+- Facebook Prophet (trend + seasonality + holidays)  
+- SARIMA  
+
+**Advanced Models**
+- LSTM / GRU (PyTorch) for nonlinear pattern capture  
+
+**Optional Big Data Element**
+- Use PySpark for parallel feature engineering and rolling statistics  
+
+**Tools**
+- Python: pandas, numpy, matplotlib, seaborn  
+- statsmodels, prophet, torch  
+- Jupyter Notebook  
+- Optional: PySpark / Spark  
+
+---
+
+### Evaluation (Metrics + Baseline)
+
+**Metrics**
+- RMSE  
+- MAE  
+- MAPE (primary)  
+- R²  
+
+**Baseline Comparison**
+- Compare naïve vs Prophet vs SARIMA vs LSTM  
+- Target: improve ≥25–30% over baseline (24-hour forecast)
+
+**Setup**
+- Time-based train/test split (last 20% for testing)  
+- Rolling-window cross-validation  
+
+**Additional Analysis**
+- Error analysis on:
+  - High pollution days  
+  - Seasonal subsets (dry vs wet seasons)  
+
+---
+
+### Expected Insights / Outcomes
+
+**Key Patterns (examples)**
+- Low wind + dry season → highest health risk  
+- Rain after 3+ dry days → PM2.5 drops ~40%  
+- Evening/weekend traffic spikes  
+
+**Deliverables**
+- Full report  
+- Clean, reproducible Jupyter Notebook  
+- Presentation slides  
+- Forecast visualization (plots or Streamlit dashboard)  
+- GitHub repository  
+
+---
+
+### Broader Impact
+- Actionable advice for Hanoi students  
+- Evidence for pollution mitigation strategies  
+
+---
+
+### Risks & Backup
+
+**Risk**
+- Dataset is already clean → limited preprocessing practice  
+
+**Backup Plans**
+1. Recreate all features from raw data  
+2. Use alternative/raw Hanoi AQI datasets:  
+   - https://www.kaggle.com/datasets/nitirajkulkarni/hanoi-vn-1581130  
+3. Fallback topic:  
+   - MovieLens 25M recommender system (Spark ALS)
