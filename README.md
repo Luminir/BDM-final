@@ -1,113 +1,61 @@
-# Hanoi PM2.5 Air Quality Dataset with Weather Features
+# Hanoi PM2.5 Forecasting Project
 
-## Overview
+## Tong quan
 
-14,451 timestamped PM2.5 observations in Hanoi, Vietnam (Feb 2024 to Jan 2026), enriched with temporal, lag, rolling, and weather-based features for forecasting tasks.
+Du an nay du bao PM2.5 theo gio tai Ha Noi de ho tro sinh vien len ke hoach hoc tap, di chuyen va hoat dong hang ngay. Repo gom:
 
-## Quick Stats
+- bo du lieu da xu ly cho mo hinh hoa
+- script tao du bao baseline
+- ung dung Streamlit bang tieng Viet de nguoi dung khong biet lap trinh van co the xem du bao
 
-- Rows: 14,451
-- Columns: 34 total (`datetime` + 1 target + 32 predictors)
-- Time range (UTC): `2024-02-14 09:00:00` to `2026-01-26 07:00:00`
-- Missing values: 0%
-- Mean PM2.5: 33.28 ug/m3
-- Median PM2.5: 28.41 ug/m3
+## Chay nhanh ung dung web
 
-## Column Groups
+Thuc hien trong thu muc `BDM-final`:
 
-### Target variable
-
-- `pm25`: PM2.5 concentration (ug/m3)
-
-### Time and metadata
-
-- `datetime`: hourly timestamp (UTC)
-- `source`: PM2.5 data source label
-
-### Temporal features (8)
-
-- `year`, `month`, `day`, `hour`
-- `day_of_week` (0=Monday, 6=Sunday)
-- `is_weekend` (0/1)
-- `season` (`dry` or `wet`)
-- `is_dry_season` (0/1)
-
-### Lag and rolling features (7)
-
-- `pm25_lag1`
-- `pm25_lag24`
-- `pm25_lag168`
-- `pm25_rolling_3h`
-- `pm25_rolling_24h`
-- `pm25_rolling_7d`
-- `pm25_rolling_24h_std`
-
-### Weather and derived features (16)
-
-- `temperature`, `humidity`, `dew_point`
-- `precipitation`, `rain`, `is_raining`
-- `pressure_msl`, `surface_pressure`, `pressure_diff`
-- `wind_speed`, `wind_direction`, `wind_gusts`, `wind_u`, `wind_v`
-- `cloud_cover`
-- `temp_humidity`
-
-## Sample Usage
-
-```python
-import pandas as pd
-from sklearn.linear_model import LinearRegression
-from sklearn.metrics import r2_score, root_mean_squared_error
-
-df = pd.read_csv(
-    "hanoi_aqi_ml_ready_fixed.csv",
-    parse_dates=["datetime"]
-).sort_values("datetime")
-
-split_idx = int(len(df) * 0.8)
-train = df.iloc[:split_idx]
-test = df.iloc[split_idx:]
-
-features = ["pm25_lag1", "pm25_rolling_24h", "temperature", "humidity"]
-X_train = train[features]
-y_train = train["pm25"]
-X_test = test[features]
-y_test = test["pm25"]
-
-model = LinearRegression()
-model.fit(X_train, y_train)
-
-pred = model.predict(X_test)
-print("R2:", round(r2_score(y_test, pred), 3))
-print("RMSE:", round(root_mean_squared_error(y_test, pred), 3))
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+streamlit run web/app.py
 ```
 
-Expected baseline with the split above: `R2 ~ 0.80`, `RMSE ~ 6.92 ug/m3`.
+Sau khi chay lenh cuoi, trinh duyet se mo ung dung du bao PM2.5.
 
-## Notes
+## Tinh nang cua ung dung
 
-- The dataset has no missing values and no duplicate timestamps.
-- Timestamps are not perfectly continuous (there are occasional multi-hour gaps), so use time-aware validation.
+- Doc truc tiep file `predictions.csv`, khong can upload du lieu
+- Hien thi du bao PM2.5 theo ngay va theo gio bang tieng Viet
+- Su dung `linear_pred` lam du bao chinh
+- Cho phep so sanh them voi baseline `persistence_pred`
+- Dua ra goi y de sinh vien chon khung gio de di hoc, di chuyen, van dong ngoai troi
+- Cho phep tai file CSV cua khung du lieu dang xem
 
-## Files
+## Chay script tao du bao
 
-- `hanoi_aqi_ml_ready_fixed.csv`: main modeling dataset
-- `data_dictionary.csv`: column definitions, units, and examples
+Neu can tao lai file du bao:
 
-## License
-
-CC0 (Public Domain)
-
-## Acknowledgments
-
-- OpenAQ + WAQI for PM2.5 data
-- Open-Meteo for weather data
-
-
-## FOCUS
-`python -m venv .venv  `
-`.\.venv\Scripts\Activate.ps1`
-```bash
-pip install -r requirements.txt
+```powershell
 python main/hanoi_pm25_forecast.py
 ```
+
+Script se doc `hanoi_aqi_ml_ready_fixed.csv` va ghi ket qua vao `predictions.csv`.
+
+## Thong tin du lieu
+
+- 14,451 ban ghi theo gio
+- Khoang thoi gian: `2024-02-14 09:00:00` den `2026-01-26 07:00:00`
+- Bien muc tieu: `pm25`
+- Du lieu khong co gia tri thieu theo README hien tai
+
+## File chinh
+
+- `hanoi_aqi_ml_ready_fixed.csv`: bo du lieu chinh
+- `predictions.csv`: ket qua du bao de app su dung
+- `main/hanoi_pm25_forecast.py`: script huan luyen va tao du bao baseline
+- `web/app.py`: ung dung Streamlit
+
+## Ghi chu
+
+- Ung dung la cong cu ho tro hoc tap va lap ke hoach hang ngay, khong phai tu van y khoa.
+- Muc PM2.5 cang thap thi chat luong khong khi cang tot.
 
