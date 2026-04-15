@@ -2,23 +2,29 @@ from __future__ import annotations
 
 import argparse
 import sys
-import zipfile
 from pathlib import Path
 
-import numpy as np
-import pandas as pd
-from sklearn.linear_model import LinearRegression
-from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
+from joblib import dump
 
+ROOT_DIR = Path(__file__).resolve().parents[1]
+if str(ROOT_DIR) not in sys.path:
+    sys.path.append(str(ROOT_DIR))
 
-DEFAULT_CSV = "hanoi_aqi_ml_ready_fixed.csv"
-DEFAULT_ZIP = "hanoi-air-quality-pm2-5-weather-data-2024-2026.zip"
-FEATURE_COLUMNS = ["pm25_lag1", "pm25_rolling_24h", "temperature", "humidity"]
+from main.forecasting_core import (
+    DEFAULT_CSV,
+    DEFAULT_MODEL_OUTPUT,
+    DEFAULT_ZIP,
+    ensure_dataset,
+    format_metrics,
+    load_dataset,
+    safe_text,
+    train_local_model,
+)
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Train and evaluate baseline PM2.5 forecasting models on Hanoi dataset."
+        description="Train the local Hanoi PM2.5 forecasting model and export app artifacts."
     )
     parser.add_argument(
         "--data",
@@ -41,96 +47,12 @@ def parse_args() -> argparse.Namespace:
         default="predictions.csv",
         help="Path to write prediction results CSV (default: predictions.csv)",
     )
-    return parser.parse_args()
-
-
-def ensure_dataset(csv_path: Path, zip_path: Path) -> Path:
-    if csv_path.exists():
-        return csv_path
-
-    if not zip_path.exists():
-        raise FileNotFoundError(
-            f"Dataset not found. Missing both '{csv_path}' and '{zip_path}'."
-        )
-
-    with zipfile.ZipFile(zip_path, "r") as zf:
-        members = zf.namelist()
-        if csv_path.name in members:
-            zf.extract(csv_path.name, csv_path.parent)
-            return csv_path
-
-        candidates = [m for m in members if m.lower().endswith(".csv")]
-        if not candidates:
-            raise FileNotFoundError("No CSV file found inside the zip archive.")
-
-        first_csv = candidates[0]
-        zf.extract(first_csv, csv_path.parent)
-
-        extracted = csv_path.parent / first_csv
-        extracted.rename(csv_path)
-        return csv_path
-
-
-def load_data(csv_path: Path) -> pd.DataFrame:
-    df = pd.read_csv(csv_path, parse_dates=["datetime"])
-    required_cols = {"datetime", "pm25", *FEATURE_COLUMNS}
-    missing = required_cols.difference(df.columns)
-    if missing:
-        missing_text = ", ".join(sorted(missing))
-        raise KeyError(f"Dataset is missing required columns: {missing_text}")
-
-    df = df.sort_values("datetime").reset_index(drop=True)
-    return df
-
-
-def time_split(df: pd.DataFrame, test_ratio: float) -> tuple[pd.DataFrame, pd.DataFrame]:
-    if not (0 < test_ratio < 1):
-        raise ValueError("--test-ratio must be between 0 and 1.")
-
-    split_idx = int(len(df) * (1 - test_ratio))
-    if split_idx <= 0 or split_idx >= len(df):
-        raise ValueError("Invalid split index. Adjust --test-ratio.")
-
-    train = df.iloc[:split_idx].copy()
-    test = df.iloc[split_idx:].copy()
-    return train, test
-
-
-def calc_metrics(y_true: pd.Series, y_pred: pd.Series | np.ndarray) -> dict[str, float]:
-    y_true_np = np.asarray(y_true, dtype=float)
-    y_pred_np = np.asarray(y_pred, dtype=float)
-
-    rmse = float(np.sqrt(mean_squared_error(y_true_np, y_pred_np)))
-    mae = float(mean_absolute_error(y_true_np, y_pred_np))
-    r2 = float(r2_score(y_true_np, y_pred_np))
-
-    non_zero = y_true_np != 0
-    if non_zero.any():
-        mape = float(np.mean(np.abs((y_true_np[non_zero] - y_pred_np[non_zero]) / y_true_np[non_zero])) * 100)
-    else:
-        mape = float("nan")
-
-    return {"RMSE": rmse, "MAE": mae, "R2": r2, "MAPE": mape}
-
-
-def format_metrics(name: str, metrics: dict[str, float]) -> str:
-    return (
-        f"{name:<14} | "
-        f"RMSE: {metrics['RMSE']:.3f} | "
-        f"MAE: {metrics['MAE']:.3f} | "
-        f"R2: {metrics['R2']:.4f} | "
-        f"MAPE: {metrics['MAPE']:.2f}%"
+    parser.add_argument(
+        "--model-output",
+        default=DEFAULT_MODEL_OUTPUT,
+        help=f"Path to write the serialized model bundle (default: {DEFAULT_MODEL_OUTPUT})",
     )
-
-
-def safe_text(value: Path | str) -> str:
-    text = str(value)
-    encoding = sys.stdout.encoding or "utf-8"
-    try:
-        text.encode(encoding)
-        return text
-    except UnicodeEncodeError:
-        return text.encode("ascii", "backslashreplace").decode("ascii")
+    return parser.parse_args()
 
 
 def main() -> int:
@@ -138,51 +60,42 @@ def main() -> int:
     csv_path = Path(args.data)
     zip_path = Path(args.zip)
     output_path = Path(args.output)
+    model_output_path = Path(args.model_output)
 
     try:
         dataset_path = ensure_dataset(csv_path, zip_path)
-        df = load_data(dataset_path)
-        train, test = time_split(df, args.test_ratio)
+        dataset_df = load_dataset(dataset_path)
+        model_bundle, predictions_df = train_local_model(dataset_df, args.test_ratio)
     except Exception as exc:
         print(f"[ERROR] {exc}")
         return 1
 
     print("Dataset loaded")
-    print(f"- Rows: {len(df):,}")
-    print(f"- Columns: {len(df.columns)}")
-    print(f"- Time range: {df['datetime'].min()} -> {df['datetime'].max()}")
-    print(f"- Train rows: {len(train):,} | Test rows: {len(test):,}")
+    print(f"- Rows: {len(dataset_df):,}")
+    print(f"- Columns: {len(dataset_df.columns)}")
+    print(
+        f"- Local history window: {model_bundle['local_history_start']} -> {model_bundle['local_history_end']}"
+    )
+    print(
+        f"- Saved forecast window: {model_bundle['test_window_start']} -> {model_bundle['test_window_end']}"
+    )
+    print(f"- Model feature count: {len(model_bundle['feature_columns'])}")
     print()
-
-    y_train = train["pm25"]
-    y_test = test["pm25"]
-
-    # Baseline model: use lag-1 as naive persistence estimate.
-    persistence_pred = test["pm25_lag1"]
-    persistence_metrics = calc_metrics(y_test, persistence_pred)
-
-    # Linear regression baseline.
-    model = LinearRegression()
-    model.fit(train[FEATURE_COLUMNS], y_train)
-    linear_pred = model.predict(test[FEATURE_COLUMNS])
-    linear_metrics = calc_metrics(y_test, linear_pred)
 
     print("Model performance")
-    print(format_metrics("Persistence", persistence_metrics))
-    print(format_metrics("LinearReg", linear_metrics))
+    print(format_metrics("Persistence", model_bundle["metrics"]["baseline"]))
+    print(format_metrics("Local linear model", model_bundle["metrics"]["local_model"]))
+    print(format_metrics("DoW/hour fallback", model_bundle["metrics"]["fallback"]))
 
-    out_df = pd.DataFrame(
-        {
-            "datetime": test["datetime"],
-            "actual_pm25": y_test,
-            "persistence_pred": persistence_pred,
-            "linear_pred": linear_pred,
-        }
-    )
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    out_df.to_csv(output_path, index=False)
+    predictions_df.to_csv(output_path, index=False)
+
+    model_output_path.parent.mkdir(parents=True, exist_ok=True)
+    dump(model_bundle, model_output_path)
+
     print()
     print(f"Saved predictions to: {safe_text(output_path)}")
+    print(f"Saved model bundle to: {safe_text(model_output_path)}")
     return 0
 
 

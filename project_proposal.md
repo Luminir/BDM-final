@@ -1,332 +1,137 @@
-# **BDM ClassCLC_02 - TEAM NUMBER 17**
+# BDM Final Project Proposal (Updated to Match Current Implementation)
 
-+-----------------------------------------------------------------------+
-| # **Đề bài:**                                                         |
-|                                                                       |
-| **Team Formation & Project Proposal Registration (via Link)**         |
-|                                                                       |
-| To start the **Final Research Project**, please **form a team (max. 3 |
-| students)** and **register your team + submit a short project         |
-| proposal** via the provided link.                                     |
-|                                                                       |
-| **1) Team rules**                                                     |
-|                                                                       |
-| -   **Team size:** up to **03 students**                              |
-|                                                                       |
-| -   Each student can join **only one team**.                          |
-|                                                                       |
-| -   Registration is considered valid only when **all required         |
-|     fields** are completed.                                           |
-|                                                                       |
-| **2) Registration link & deadline**                                   |
-|                                                                       |
-| -   **Registration                                                    |
-|     link:** [**https://                                               |
-| docs.google.com/spreadsheets/d/1RyC9JmoT_D_Y5_cLZkWJ8bg2lAF3cVeg/edit |
-| ?gid=265968320#gid=265968320**](https://docs.google.com/spreadsheets/ |
-| d/1RyC9JmoT_D_Y5_cLZkWJ8bg2lAF3cVeg/edit?gid=265968320#gid=265968320) |
-|                                                                       |
-| -   **Deadline:** **11/3/2026**                                       |
-|                                                                       |
-| -   **Who submits:** Team leader (one submission per team)            |
-|                                                                       |
-| **3) Proposal focus: show your "insight"**                            |
-|                                                                       |
-| The main goal of this project is to see **your own insight** about a  |
-| topic you **genuinely care about**, can **relate to easily**, and can |
-| explore using **data mining methods**.                                |
-|                                                                       |
-| When writing your proposal, prioritize:                               |
-|                                                                       |
-| -   **A clear question** you want data to answer (not just a trendy   |
-|     title)                                                            |
-|                                                                       |
-| -   **Why you care** (personal relevance, real-world motivation,      |
-|     curiosity)                                                        |
-|                                                                       |
-| -   **What patterns/behaviors you expect to find** and why that       |
-|     expectation makes sense                                           |
-|                                                                       |
-| -   **A feasible plan** with data + methods + evaluation              |
-|                                                                       |
-| **4) Suggested topic tracks (aligned with the course syllabus)**      |
-|                                                                       |
-| Choose **one main track** (you can combine tracks if it's coherent):  |
-|                                                                       |
-| 1.  **Data Preparation & Cleaning**                                   |
-|                                                                       |
-|     -   Missing/noisy data handling, feature engineering, scalable    |
-|         preprocessing                                                 |
-|                                                                       |
-| 2.  **Near-Duplicate Detection / Similarity Search**                  |
-|                                                                       |
-|     -   Detect duplicate posts/products/news, plagiarism-like         |
-|         similarity, clustering near-duplicates                        |
-|                                                                       |
-| 3.  **Frequent Itemsets & Market Basket Analysis**                    |
-|                                                                       |
-|     -   Discover co-occurrence patterns (shopping baskets, course     |
-|         selections, app usage)                                        |
-|                                                                       |
-| 4.  **Association Rule Mining**                                       |
-|                                                                       |
-|     -   "If X then Y" patterns, support/confidence/lift, actionable   |
-|         rules                                                         |
-|                                                                       |
-| 5.  **Recommender Systems** (content-based / item-based similarity)   |
-|                                                                       |
-|     -   Recommend movies/books/music, learning resources, products,   |
-|         places, etc.                                                  |
-|                                                                       |
-| 6.  **Outlier / Anomaly Detection**                                   |
-|                                                                       |
-|     -   Fraud-like anomalies, unusual behaviors, rare events, sensor  |
-|         anomalies                                                     |
-|                                                                       |
-| 7.  **Data Streams**                                                  |
-|                                                                       |
-|     -   Real-time/continuous data, incremental updates, streaming     |
-|         constraints                                                   |
-|                                                                       |
-| 8.  **Time Series Mining & Forecasting**                              |
-|                                                                       |
-|     -   Trend/seasonality, forecasting demand/traffic/energy, event   |
-|         impact analysis                                               |
-|                                                                       |
-| Tip: Pick a domain you know well (e.g., **student life, e-commerce,   |
-| social media, mobility, traffic, sports, environment, finance, public |
-| datasets**) so your interpretation is stronger.                       |
-|                                                                       |
-| **5) What to submit in the registration form (required)**             |
-|                                                                       |
-| Please fill in **all** items below:                                   |
-|                                                                       |
-| **A. Team information**                                               |
-|                                                                       |
-| -   Team name                                                         |
-|                                                                       |
-| -   Team leader: full name + student ID + email                       |
-|                                                                       |
-| -   Member(s): full name + student ID + email                         |
-|                                                                       |
-| **B. Project proposal (must be detailed enough for approval)**        |
-|                                                                       |
-| 1.  **Project title** (clear, specific)                               |
-|                                                                       |
-| 2.  **Problem statement / research question** (what exactly are you   |
-|     trying to discover/predict/detect?)                               |
-|                                                                       |
-| 3.  **Why this topic? (INSIGHT required)**                            |
-|                                                                       |
-|     -   Why you personally care / why it matters                      |
-|                                                                       |
-|     -   Why data mining is suitable                                   |
-|                                                                       |
-|     -   What you expect to learn or uncover                           |
-|                                                                       |
-| 4.  **Dataset plan**                                                  |
-|                                                                       |
-|     -   Source link/name (public dataset is recommended)              |
-|                                                                       |
-|     -   What the data contains (size, key fields, time range if       |
-|         relevant)                                                     |
-|                                                                       |
-|     -   Any privacy/ethics considerations                             |
-|                                                                       |
-| 5.  **Proposed approach (implementation direction)**                  |
-|                                                                       |
-|     -   Pipeline: preprocessing → method/model → evaluation           |
-|                                                                       |
-|     -   Methods aligned with your chosen track (e.g., association     |
-|         rules, recommenders, anomaly detection, streaming/time        |
-|         series)                                                       |
-|                                                                       |
-|     -   Tools: Python / PySpark / Spark / SQL / etc. (as appropriate) |
-|                                                                       |
-| 6.  **Evaluation plan**                                               |
-|                                                                       |
-|     -   Metrics you will use (e.g., F1/AUC/RMSE/Silhouette/Lift,      |
-|         etc.)                                                         |
-|                                                                       |
-|     -   Baseline comparison (simple method vs improved method)        |
-|                                                                       |
-| 7.  **Expected outputs**                                              |
-|                                                                       |
-|     -   Findings/insights you aim to report + final deliverables      |
-|         (report + code/notebook + slides, etc.)                       |
-|                                                                       |
-| 8.  **Risks & backup plan**                                           |
-|                                                                       |
-|     -   If dataset is too small/too messy/unavailable, what's your    |
-|         alternative?                                                  |
-|                                                                       |
-| **6) Approval notes**                                                 |
-|                                                                       |
-| -   Proposals that are **too generic** (only a title, no data plan,   |
-|     no method, no evaluation, no insight) will be **returned for      |
-|     revision**.                                                       |
-|                                                                       |
-| -   Use **honest scope**: a smaller, well-executed project with       |
-|     strong insight is better than an unrealistic big project.         |
-+=======================================================================+
-+-----------------------------------------------------------------------+
+## Team Information
 
-# **Our Project Which has been approved**
+- Team Number: 17
+- Members: Tran Nam Son (2301140089), Nguyen Duc Manh (2301140061), Do Hoang Khoi (2301140054)
 
-## A. Team Information
+## Project Title
 
-1. Trần Nam Sơn - 2301140089  
-2. Nguyễn Đức Mạnh - 2301140061  
-3. Đỗ Hoàng Khôi - 2301140054  
+Forecasting Hourly PM2.5 in Hanoi for Student Daily Planning Using a Local-First Hybrid Forecasting Pipeline
 
----
+## Track
 
-## B. Project Proposal
+Time Series Mining and Forecasting (with Data Preparation and Feature Engineering)
 
-### Title
-**Forecasting Hourly PM2.5 Air Pollution in Hanoi: Time-Series Mining for Student Health & Daily Planning**
+## Problem Statement
 
-### Track
-Time Series Mining & Forecasting (with elements of Data Preparation & Cleaning)
+Students in Hanoi need practical hourly air-quality guidance for commuting, classes, exercise, and outdoor activities. Traditional one-shot model demos are not enough for planning because users need:
 
----
+- Reliable forecasts for known historical windows
+- Fresh near-term estimates for upcoming days
+- Clear confidence and source transparency
 
-### Research Question
-Can we build accurate multi-step (24–168 hour) forecasts of hourly PM2.5 levels in Hanoi using historical air quality and weather data, and what key seasonal/weather patterns drive dangerous pollution spikes that impact students’ outdoor activities, commuting, mask usage, and study routines?
+This project builds a local-first forecasting app that combines offline model artifacts with live weather and air-quality feeds to support real daily decisions.
 
----
+## Research Questions
 
-### Why We Care (Insight)
-As a student living and studying in Hanoi, I face toxic air (PM2.5 often >100 µg/m³ in winter/dry seasons) that forces decisions like skipping outdoor exercise, wearing masks to class, or staying indoors.  
+1. Can a feature-rich linear model outperform a simple lag-1 baseline for hourly PM2.5 forecasting on Hanoi data?
+2. How should we design a robust planner when local historical data ends, but users still need a 30-day forward view?
+3. Does a source-aware forecast stack (historical replay, live AQI, weather-driven model, fallback profile) provide clearer and more trustworthy planning signals?
 
-Generic apps provide forecasts but rarely explain local drivers (e.g., dry winds + no rain = spikes; rain after pollution buildup = sharp drops).  
+## Why This Topic Matters (Insight)
 
-This project uncovers actionable, Hanoi-specific patterns so students can plan better and reduce health risks.  
+Hanoi students face frequent PM2.5 spikes that directly affect day-to-day behavior. The goal is not only "model accuracy" but also "decision usability":
 
-It matters for public health in Vietnam’s cities, where air pollution is a growing crisis, and demonstrates how time-series data mining turns raw sensor data into practical, life-improving insights.
+- Hour-by-hour choices are practical for class schedules and commuting.
+- Source labels and confidence labels reduce blind trust in uncertain long-range forecasts.
+- A graceful fallback design is essential when APIs fail or data windows are limited.
 
----
+## Dataset Plan
 
-### Dataset (Source + Description)
+- Main dataset: https://www.kaggle.com/datasets/diabolicfox/hanoi-air-quality-pm2-5-weather-data-2024-2026
+- Current local file: `hanoi_aqi_ml_ready_fixed.csv`
+- Size and coverage: 14,451 hourly rows, from 2024-02-14 09:00:00 to 2026-01-26 07:00:00
+- Target: `pm25`
+- Key feature group 1: weather variables (temperature, humidity, dew point, wind, pressure, cloud cover, rain)
+- Key feature group 2: temporal variables (year, month, day, hour, day_of_week, season flags)
+- Key feature group 3: lag and rolling PM2.5 variables (`pm25_lag1`, `pm25_lag24`, `pm25_lag168`, rolling stats)
 
-**Source:**  
-https://www.kaggle.com/datasets/diabolicfox/hanoi-air-quality-pm2-5-weather-data-2024-2026  
+## Privacy and Ethics
 
-**Description:**  
-- 14,451 hourly records (Feb 2024 – Jan 2026)  
-- Target variable: PM2.5 (µg/m³)  
-- 29 features including:
-  - Temporal: hour, day_of_week, is_dry_season  
-  - Lag features: PM2.5_lag1, lag24, lag168  
-  - Rolling averages  
-  - Weather variables: temperature, humidity, wind speed/direction, precipitation, pressure, cloud cover, etc.  
+- Uses public environmental data only
+- No personal identifiers
+- App includes non-medical disclaimer and confidence labels to avoid overclaiming certainty
 
-- File size: ~1.27 MB CSV  
-- Data quality: appears clean (no missing values reported)  
-- Sources: OpenAQ / WAQI + Open-Meteo API  
-- License: Public domain / CC0  
+## Implemented Approach
 
----
+### 1. Shared Forecasting Core
 
-### Privacy / Ethics
-No issues – open environmental data, no personal information involved.
+Implemented in `main/forecasting_core.py`:
 
----
+- Dataset loading and validation
+- Feature-column discovery for model training
+- Time-based split and metric calculation (RMSE, MAE, R2, MAPE)
+- Local model training and artifact packaging
+- Historical replay generation
+- Recursive weather-driven forecasting
+- Day-of-week and hour fallback profile for extended horizon
 
-### Methods (Pipeline + Algorithms)
+### 2. Local Training and Artifacts
 
-#### Pipeline
+Implemented in `main/hanoi_pm25_forecast.py`:
 
-**1. Preprocessing & Cleaning**
-- Load data using pandas (or PySpark for scalability)
-- Set datetime index  
-- Recreate lag and rolling features from scratch  
-- Add Vietnamese holiday flags (e.g., Tet, National Day)
+- Trains `LinearRegression` on numeric engineered features (excluding `datetime`, `pm25`, `source`, `season`)
+- Keeps time-based split (`--test-ratio`)
+- Exports `predictions.csv` with columns `datetime`, `actual_pm25`, `forecast_pm25`, `baseline_pred`, `source_label`
+- Exports `model_bundle.joblib` with fitted model, feature list, metrics, local history/test window metadata, and planner fallback profile
 
-**2. Exploratory Data Analysis (EDA)**
-- Time series decomposition (trend / seasonal / residual)
-- Correlation heatmaps  
-- Seasonality plots (hour / day / season)
+### 3. Hybrid Forecasting Web App
 
----
+Implemented in `web/app.py`:
 
-#### Modeling (Time Series Focus)
+- Two user modes: `Historical` (local artifact replay) and `Upcoming planner` (30-day hourly planning)
+- Hourly-only selection (`00:00` to `23:00`) to avoid misleading minute behavior
+- Forecast source window 1 (days 0-7): Open-Meteo air-quality API (`pm2_5`)
+- Forecast source window 2 (days 8-16): Open-Meteo weather API + recursive local model forecast
+- Forecast source window 3 (days 17-30): offline day_of_week + hour fallback profile
+- Adds per-row labels: `source_label` and `confidence_label`
+- Graceful degradation: API failures trigger warnings and fallback use
 
-**Baselines**
-- Persistence forecast  
-- Seasonal naïve  
+## Current Baseline Results (From Regenerated Artifacts)
 
-**Classical Models**
-- Facebook Prophet (trend + seasonality + holidays)  
-- SARIMA  
+Using the current implementation on the same dataset split:
 
-**Advanced Models**
-- LSTM / GRU (PyTorch) for nonlinear pattern capture  
+- Persistence baseline: RMSE 7.156, MAE 5.121, R2 0.7903, MAPE 26.85%
+- Local linear model: RMSE 6.701, MAE 4.850, R2 0.8161, MAPE 26.65%
+- Extended fallback profile (day_of_week + hour): RMSE 18.309, MAE 15.361, R2 -0.3729, MAPE 110.87%
 
-**Optional Big Data Element**
-- Use PySpark for parallel feature engineering and rolling statistics  
+Interpretation:
 
-**Tools**
-- Python: pandas, numpy, matplotlib, seaborn  
-- statsmodels, prophet, torch  
-- Jupyter Notebook  
-- Optional: PySpark / Spark  
+- Local linear model improves over persistence on holdout.
+- Fallback profile is intentionally lower-confidence and used only for outer planner horizon or outage scenarios.
 
----
+## Evaluation Plan
 
-### Evaluation (Metrics + Baseline)
+### Quantitative Evaluation
 
-**Metrics**
-- RMSE  
-- MAE  
-- MAPE (primary)  
-- R²  
+- Model metrics on time-based holdout: RMSE, MAE, R2, MAPE
+- Comparison target: persistence baseline vs local linear model
 
-**Baseline Comparison**
-- Compare naïve vs Prophet vs SARIMA vs LSTM  
-- Target: improve ≥25–30% over baseline (24-hour forecast)
+### Product-Level Validation
 
-**Setup**
-- Time-based train/test split (last 20% for testing)  
-- Rolling-window cross-validation  
+- Historical mode check 1: different hours on the same date must produce different values
+- Historical mode check 2: baseline and actual overlays are shown only when available
+- Planner mode check 1: source labels reflect window logic (0-7, 8-16, 17-30)
+- Planner mode check 2: Tuesday vs Wednesday in fallback window should not be identical by default
+- Reliability check: API outage handling keeps planner functional and explicit about confidence and source
 
-**Additional Analysis**
-- Error analysis on:
-  - High pollution days  
-  - Seasonal subsets (dry vs wet seasons)  
+## Deliverables
 
----
+- Codebase with shared forecasting core and web app
+- `predictions.csv` and `model_bundle.joblib` artifacts
+- Streamlit app for interactive planning and CSV export
+- Documentation (`README.md`, updated `project_proposal.md`)
 
-### Expected Insights / Outcomes
+## Risks and Mitigation
 
-**Key Patterns (examples)**
-- Low wind + dry season → highest health risk  
-- Rain after 3+ dry days → PM2.5 drops ~40%  
-- Evening/weekend traffic spikes  
+- Risk: live API downtime or rate issues
+- Mitigation: cached calls, warning messages, offline fallback profile
+- Risk: long-horizon uncertainty
+- Mitigation: explicit confidence labels and source transparency
+- Risk: dataset window ends before current date
+- Mitigation: mode-gated date selection and planner-only future windows
 
-**Deliverables**
-- Full report  
-- Clean, reproducible Jupyter Notebook  
-- Presentation slides  
-- Forecast visualization (plots or Streamlit dashboard)  
-- GitHub repository  
+## Scope Statement
 
----
-
-### Broader Impact
-- Actionable advice for Hanoi students  
-- Evidence for pollution mitigation strategies  
-
----
-
-### Risks & Backup
-
-**Risk**
-- Dataset is already clean → limited preprocessing practice  
-
-**Backup Plans**
-1. Recreate all features from raw data  
-2. Use alternative/raw Hanoi AQI datasets:  
-   - https://www.kaggle.com/datasets/nitirajkulkarni/hanoi-vn-1581130  
-3. Fallback topic:  
-   - MovieLens 25M recommender system (Spark ALS)
+The project prioritizes practical planning support over long-range scientific certainty. The system is designed as a transparent, local-first decision aid rather than a medical or regulatory forecasting tool.
