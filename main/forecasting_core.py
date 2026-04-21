@@ -289,6 +289,66 @@ def build_historical_forecast_frame(
     ]
 
 
+def get_safety_recommendations(pm25: float, construction_risk: str) -> dict[str, str]:
+    """Generates safety advice for different categories based on PM2.5 and construction risk."""
+    is_high_risk = construction_risk == "High"
+    is_mod_risk = construction_risk == "Moderate"
+
+    # Base advice based on PM2.5
+    if pm25 <= 12:
+        base_cat = "excellent"
+    elif pm25 <= 35.4:
+        base_cat = "good"
+    elif pm25 <= 55.4:
+        base_cat = "moderate"
+    elif pm25 <= 150.4:
+        base_cat = "unhealthy"
+    else:
+        base_cat = "hazardous"
+
+    recommendations = {}
+
+    # Category: Exercise
+    if base_cat == "excellent":
+        msg = "Perfect conditions for high-intensity outdoor training."
+    elif base_cat == "good":
+        msg = "Good for exercise, but sensitive groups should monitor symptoms."
+    elif base_cat == "moderate":
+        msg = "Consider switching to indoor exercise or reducing intensity."
+    else:
+        msg = "Avoid outdoor exercise. Use indoor facilities with air filtration."
+    
+    if is_high_risk:
+        msg += " Warning: High construction activity nearby may cause localized dust spikes."
+    recommendations["Exercise"] = msg
+
+    # Category: Commuting
+    if base_cat in ["excellent", "good"]:
+        msg = "Open-air commuting (cycling, walking) is safe."
+    elif base_cat == "moderate":
+        msg = "Standard face mask recommended for long commutes."
+    else:
+        msg = "Wear an N95 mask and keep vehicle windows closed."
+    
+    if is_mod_risk or is_high_risk:
+        msg += " Pro tip: Active construction may lead to traffic congestion and road dust."
+    recommendations["Commuting"] = msg
+
+    # Category: Hanging Out
+    if base_cat in ["excellent", "good"]:
+        msg = "Great weather for outdoor cafes or park visits."
+    elif base_cat == "moderate":
+        msg = "Outdoor hangouts are fine, but prefer venues away from main roads."
+    else:
+        msg = "Opt for indoor malls or air-conditioned cafes."
+    
+    if is_high_risk:
+        msg += " Avoid areas near large project sites for social gatherings."
+    recommendations["Hanging Out"] = msg
+
+    return recommendations
+
+
 def standardize_forecast_frame(
     forecast_df: pd.DataFrame,
     *,

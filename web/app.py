@@ -22,16 +22,19 @@ if str(ROOT_DIR) not in sys.path:
 from main.forecasting_core import (  # noqa: E402
     apply_dow_hour_profile,
     build_historical_forecast_frame,
+    get_safety_recommendations,
     load_dataset,
     recursive_weather_forecast,
     standardize_forecast_frame,
 )
+from main.location_mining import process_projects, get_district_risk, ALL_DISTRICTS, URBAN_DISTRICTS
 
 
 APP_TIMEZONE = "Asia/Bangkok"
 PREDICTIONS_PATH = ROOT_DIR / "predictions.csv"
 HISTORY_PATH = ROOT_DIR / "hanoi_aqi_ml_ready_fixed.csv"
 MODEL_BUNDLE_PATH = ROOT_DIR / "model_bundle.joblib"
+PROJECTS_PATH = ROOT_DIR / "area_projects_details.csv"
 
 HANOI_LATITUDE = 21.0285
 HANOI_LONGITUDE = 105.8542
@@ -258,17 +261,30 @@ def build_planner_forecasts(
         warnings.append(f"Live weather API unavailable, so mid-range planner rows may use offline fallback. Detail: {exc}")
 
     overlay_df = None
+    pure_model_df = None
     if weather_df is not None and not weather_df.empty:
+        # Main forecast (hybrid: API first 7 days, model after)
         overlay_df = recursive_weather_forecast(
             weather_df=weather_df,
             history_df=history_df,
             model_bundle=model_bundle,
             fixed_future_pm25=None if air_df is None else air_df[["datetime", "forecast_pm25"]],
         )
-    elif air_df is not None and not air_df.empty:
-        overlay_df = air_df
+        # History-based model prediction (Pure model for comparison)
+        pure_model_df = recursive_weather_forecast(
+            weather_df=weather_df,
+            history_df=history_df,
+            model_bundle=model_bundle,
+            fixed_future_pm25=None,
+        ).rename(columns={"forecast_pm25": "history_model_pm25"})
 
-    return overlay_forecasts(fallback_df, overlay_df).sort_values("datetime").reset_index(drop=True), warnings
+    final_df = overlay_forecasts(fallback_df, overlay_df)
+    if pure_model_df is not None:
+        final_df = final_df.merge(pure_model_df[["datetime", "history_model_pm25"]], on="datetime", how="left")
+    else:
+        final_df["history_model_pm25"] = np.nan
+
+    return final_df.sort_values("datetime").reset_index(drop=True), warnings
 
 
 def slice_day(df: pd.DataFrame, selected_date: pd.Timestamp) -> pd.DataFrame:
@@ -297,9 +313,11 @@ def build_table(day_df: pd.DataFrame) -> pd.DataFrame:
     )
 
 
-def build_chart(day_df: pd.DataFrame, target_timestamp: pd.Timestamp, show_baseline: bool) -> go.Figure:
+def build_chart(day_df: pd.DataFrame, target_timestamp: pd.Timestamp, show_baseline: bool, show_history_model: bool = False) -> go.Figure:
     figure = go.Figure()
     figure.add_trace(go.Scatter(x=day_df["datetime"], y=day_df["forecast_pm25"], mode="lines+markers", name="Main forecast", line={"color": "#0f766e", "width": 4}))
+    if show_history_model and "history_model_pm25" in day_df.columns and day_df["history_model_pm25"].notna().any():
+        figure.add_trace(go.Scatter(x=day_df["datetime"], y=day_df["history_model_pm25"], mode="lines", name="History-based model", line={"color": "#6366f1", "dash": "dot", "width": 3}))
     if day_df["actual_pm25"].notna().any():
         figure.add_trace(go.Scatter(x=day_df["datetime"], y=day_df["actual_pm25"], mode="lines+markers", name="Actual PM2.5", line={"color": "#163847", "width": 3}))
     if show_baseline and day_df["baseline_pred"].notna().any():
@@ -327,6 +345,7 @@ def render_sidebar(
         default_hour = "08:00" if "08:00" in hour_options else hour_options[0]
         selected_hour = st.sidebar.selectbox("Hour", hour_options, index=hour_options.index(default_hour))
         show_baseline = st.sidebar.toggle("Show comparison lines", value=True)
+        show_history_model = False
         st.sidebar.info(
             f"Local dataset: {pd.Timestamp(model_bundle['local_history_start']):%d %b %Y} to {pd.Timestamp(model_bundle['local_history_end']):%d %b %Y}. "
             f"Saved holdout forecast: {pd.Timestamp(model_bundle['test_window_start']):%d %b %Y} to {pd.Timestamp(model_bundle['test_window_end']):%d %b %Y}."
@@ -336,6 +355,7 @@ def render_sidebar(
         selected_date = st.sidebar.selectbox("Date", date_options, index=0, format_func=format_date_label)
         selected_hour = st.sidebar.selectbox("Hour", [f"{hour:02d}:00" for hour in range(24)], index=8)
         show_baseline = False
+        show_history_model = st.sidebar.toggle("Show history-based model", value=True)
         st.sidebar.info(
             f"Direct AQI: {today:%d %b %Y} to {(today + pd.Timedelta(days=LIVE_AIR_QUALITY_DAYS - 1)):%d %b %Y}. "
             f"Weather-driven local model: {(today + pd.Timedelta(days=LIVE_AIR_QUALITY_DAYS)):%d %b %Y} to {(today + pd.Timedelta(days=LIVE_WEATHER_DAYS - 1)):%d %b %Y}. "
@@ -345,7 +365,39 @@ def render_sidebar(
             f"The local file ends on {pd.Timestamp(model_bundle['local_history_end']):%d %b %Y}, so dates in the gap before today are intentionally hidden."
         )
 
-    return mode, pd.Timestamp(selected_date), selected_hour, show_baseline
+    return mode, pd.Timestamp(selected_date), selected_hour, show_baseline, show_history_model
+
+
+def render_district_selector() -> str:
+    st.sidebar.markdown("---")
+    st.sidebar.markdown("## Location settings")
+    district = st.sidebar.selectbox("Trip Destination (District)", ALL_DISTRICTS, index=ALL_DISTRICTS.index("Thanh Xuân"))
+    return district
+
+
+def render_mining_dashboard(density_df: pd.DataFrame) -> None:
+    st.markdown("---")
+    st.header("🔍 Data Mining Insights: Construction Patterns")
+    st.write("We mined unstructured project names to discover where development is most active in Hanoi (2025-2026).")
+    
+    col1, col2 = st.columns([1, 1.2])
+    
+    with col1:
+        st.subheader("Project Density by District")
+        # Simple bar chart
+        chart_df = density_df.sort_values("project_count", ascending=False).head(10)
+        st.bar_chart(chart_df.set_index("district")["project_count"])
+        
+    with col2:
+        st.subheader("Urban vs Rural Distribution")
+        urban_count = density_df[density_df["district"].isin(URBAN_DISTRICTS)]["project_count"].sum()
+        rural_count = density_df[~density_df["district"].isin(URBAN_DISTRICTS)]["project_count"].sum()
+        
+        st.write(f"Total Active Projects Mined: **{density_df['project_count'].sum()}**")
+        st.write(f"🏢 Urban Districts: **{urban_count}** projects")
+        st.write(f"🌳 Rural/Suburban: **{rural_count}** projects")
+        
+        st.info("💡 Insight: High project density often correlates with higher PM10/PM2.5 'dust spikes' that models may miss without location context.")
 
 
 def main() -> None:
@@ -375,7 +427,8 @@ def main() -> None:
         f"The upcoming planner covers {today:%d %b %Y} to {(today + pd.Timedelta(days=PLANNER_HORIZON_DAYS - 1)):%d %b %Y} with source-aware hourly forecasts."
     )
 
-    mode, selected_date, selected_hour, show_baseline = render_sidebar(historical_df, model_bundle, today)
+    mode, selected_date, selected_hour, show_baseline, show_history_model = render_sidebar(historical_df, model_bundle, today)
+    selected_district = render_district_selector()
     selected_timestamp = build_target_timestamp(selected_date, selected_hour)
     day_df = slice_day(historical_df if mode == "Historical" else planner_df, selected_date)
     if day_df.empty:
@@ -384,22 +437,39 @@ def main() -> None:
 
     target_row = lookup_target(day_df, selected_timestamp)
     band = get_air_quality_band(float(target_row["forecast_pm25"]))
+    
+    # Mining integration
+    density_df = process_projects(PROJECTS_PATH)
+    district_risk = get_district_risk(selected_district, density_df)
+    safety_recs = get_safety_recommendations(float(target_row["forecast_pm25"]), district_risk["level"])
 
     if mode != "Historical":
         for warning in warnings:
             st.warning(warning)
 
-    top_col, side_col = st.columns([1.4, 1])
+    top_col, side_col = st.columns([1, 1.4])
     with top_col:
-        st.subheader("Selected moment")
+        st.subheader("Forecast snapshot")
         st.metric("Predicted PM2.5", f"{float(target_row['forecast_pm25']):.1f} ug/m3")
-        st.write(f"Time: `{selected_timestamp:%A, %d %B %Y at %H:%M}`")
-        st.write(f"Source: `{target_row['source_label']}`")
-        st.write(f"Confidence: `{target_row['confidence_label']}`")
-        st.write(f"Air quality band: `{band['label']}`")
+        st.write(f"Time: `{selected_timestamp:%H:%M}`")
+        st.write(f"District: `{selected_district}`")
+        st.write(f"Construction Risk: `{district_risk['level']}`")
+        st.write(f"AQI Band: `{band['label']}`")
+    
     with side_col:
-        st.subheader("Advice")
-        st.write(band["advice"])
+        st.subheader("Recommended category advice")
+        tabs = st.tabs(["🏃 Exercise", "🚲 Commuting", "☕ Hanging Out"])
+        with tabs[0]:
+            st.write(safety_recs["Exercise"])
+        with tabs[1]:
+            st.write(safety_recs["Commuting"])
+        with tabs[2]:
+            st.write(safety_recs["Hanging Out"])
+        
+        if district_risk["projects"]:
+            with st.expander(f"View projects in {selected_district}"):
+                for p in district_risk["projects"]:
+                    st.write(f"- {p}")
 
     ranked = day_df.sort_values("forecast_pm25").reset_index(drop=True)
     c1, c2, c3 = st.columns(3)
@@ -408,7 +478,7 @@ def main() -> None:
     c3.metric("Day average", f"{day_df['forecast_pm25'].mean():.1f} ug/m3")
 
     st.subheader("Daily forecast timeline")
-    st.plotly_chart(build_chart(day_df, selected_timestamp, show_baseline), use_container_width=True)
+    st.plotly_chart(build_chart(day_df, selected_timestamp, show_baseline, show_history_model), use_container_width=True)
 
     st.subheader("Forecast engines")
     metric_rows = [
@@ -429,6 +499,8 @@ def main() -> None:
         mime="text/csv",
         use_container_width=True,
     )
+
+    render_mining_dashboard(density_df)
 
     st.caption(
         f"Planner source windows: direct AQI through {(today + pd.Timedelta(days=LIVE_AIR_QUALITY_DAYS - 1)):%d %b %Y}, weather-driven local model through {(today + pd.Timedelta(days=LIVE_WEATHER_DAYS - 1)):%d %b %Y}, and low-confidence fallback through {(today + pd.Timedelta(days=PLANNER_HORIZON_DAYS - 1)):%d %b %Y}."

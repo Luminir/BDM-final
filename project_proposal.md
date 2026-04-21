@@ -1,4 +1,4 @@
-# BDM Final Project Proposal (Updated to Match Current Implementation)
+# BDM Final Project Proposal (Updated: Safe-Trip Air & Construction Planner)
 
 ## Team Information
 
@@ -7,131 +7,99 @@
 
 ## Project Title
 
-Forecasting Hourly PM2.5 in Hanoi for Student Daily Planning Using a Local-First Hybrid Forecasting Pipeline
+Hanoi Safe-Trip: A Location-Aware Air Quality & Construction Hotspot Planner for Students
 
 ## Track
 
-Time Series Mining and Forecasting (with Data Preparation and Feature Engineering)
+Data Mining and Forecasting (with Text Mining and Multi-source Data Fusion)
 
-## Problem Statement
+---
 
-Students in Hanoi need practical hourly air-quality guidance for commuting, classes, exercise, and outdoor activities. Traditional one-shot model demos are not enough for planning because users need:
+## 1. System Architecture (How it Works)
 
-- Reliable forecasts for known historical windows
-- Fresh near-term estimates for upcoming days
-- Clear confidence and source transparency
+This project isn't just a simple "predictor"—it's a multi-source intelligence system that combines historical patterns, live weather, and mined urban data.
 
-This project builds a local-first forecasting app that combines offline model artifacts with live weather and air-quality feeds to support real daily decisions.
+```mermaid
+graph TD
+    A["hanoi_aqi_ml_ready_fixed.csv (Past patterns)"] --> D[Recursive Model]
+    B["Open-Meteo API (Live Weather/AQI)"] --> E[App Forecast Core]
+    C["area_projects_details.csv (Unstructured Text)"] --> F[Location Mining Engine]
+    
+    D --> G[Hybrid Forecast Planner]
+    E --> G
+    F --> H[Localized Risk & Advice]
+    
+    G --> I[Streamlit Dashboard]
+    H --> I
+    
+    subgraph "Mining Process"
+    C --> F
+    end
+```
 
-## Research Questions
+### File Manifest (The "Engine Room")
 
-1. Can a feature-rich linear model outperform a simple lag-1 baseline for hourly PM2.5 forecasting on Hanoi data?
-2. How should we design a robust planner when local historical data ends, but users still need a 30-day forward view?
-3. Does a source-aware forecast stack (historical replay, live AQI, weather-driven model, fallback profile) provide clearer and more trustworthy planning signals?
+| File | Purpose (Simple Terms) |
+| :--- | :--- |
+| `main/location_mining.py` | **The Detective**: Reads messy project names and "mines" out the district (e.g., Thanh Xuân). |
+| `main/forecasting_core.py` | **The Brain**: Contains the math for the weather-driven model and the advice logic. |
+| `web/app.py` | **The Face**: The interactive website where you pick your trip and see results. |
+| `area_projects_details.csv` | **The Raw Intel**: A list of construction projects in Hanoi scraped from public notices. |
+| `hanoi_aqi_ml_ready_fixed.csv` | **The Memory**: 2 years of past weather & air data used to train the model. |
 
-## Why This Topic Matters (Insight)
+---
 
-Hanoi students face frequent PM2.5 spikes that directly affect day-to-day behavior. The goal is not only "model accuracy" but also "decision usability":
+## 2. User Experience: What You See & What It Means
 
-- Hour-by-hour choices are practical for class schedules and commuting.
-- Source labels and confidence labels reduce blind trust in uncertain long-range forecasts.
-- A graceful fallback design is essential when APIs fail or data windows are limited.
+We designed the app to be "Decision-First." Here is a breakdown of the interface:
 
-## Dataset Plan
+### A. The Planner Sidebar (Input)
+- **Mode Selection**: Switch between "Historical" (testing the model on old data) and "Upcoming Planner" (looking into the future).
+- **Destination District**: Pick where you are going. This is where the **Data Mining** happens—it looks up if that district is a "Construction Hotspot."
+- **Comparison Toggle**: Turn on the "History-based model" line to see how our pure AI model compares to the live world-wide forecast.
 
-- Main dataset: https://www.kaggle.com/datasets/diabolicfox/hanoi-air-quality-pm2-5-weather-data-2024-2026
-- Current local file: `hanoi_aqi_ml_ready_fixed.csv`
-- Size and coverage: 14,451 hourly rows, from 2024-02-14 09:00:00 to 2026-01-26 07:00:00
-- Target: `pm25`
-- Key feature group 1: weather variables (temperature, humidity, dew point, wind, pressure, cloud cover, rain)
-- Key feature group 2: temporal variables (year, month, day, hour, day_of_week, season flags)
-- Key feature group 3: lag and rolling PM2.5 variables (`pm25_lag1`, `pm25_lag24`, `pm25_lag168`, rolling stats)
+### B. The Forecast Snapshot (The "Now")
+- **AQI Band**: Tells you if the air is "Fresh," "Moderate," or "Unhealthy" in simple colors.
+- **Construction Risk**: A unique badge (Low/Moderate/High) discovered from mining the project CSV. **High risk** means even if the air looks okay, it might be dusty at street level.
 
-## Privacy and Ethics
+### C. Recommended Activity Advice (The "Action")
+We use three specialized tabs to give tailored advice:
+1.  **🏃 Exercise**: Intense breathing means high risk. We warn you to stay inside if PM2.5 or construction is high.
+2.  **🚲 Commuting**: Focuses on practical travel (e.g., "Wear an N95 mask today due to road dust in this district").
+3.  **☕ Hanging Out**: Recommends whether an outdoor cafe is a good idea or if you should stick to air-conditioned malls.
 
-- Uses public environmental data only
-- No personal identifiers
-- App includes non-medical disclaimer and confidence labels to avoid overclaiming certainty
+### D. Data Mining Dashboard (The "Insight")
+Located at the bottom, this section proves the data mining works. It shows:
+- Which districts have the most active construction projects.
+- The balance of Urban vs. Rural development in Hanoi.
+- **Why this matters**: High project density creates "dust spikes" that simple weather stations often miss.
 
-## Implemented Approach
+---
 
-### 1. Shared Forecasting Core
+## 3. Simplified "Plain English" Explanation (The "Dummy" Guide)
 
-Implemented in `main/forecasting_core.py`:
+### "Why is this better than a standard weather app?"
+Most apps just give you a single number for the whole city. Our app knows that **Thanh Xuân** might be dustier than **Tây Hồ** because of a massive housing project on Nguyễn Trãi street. We combine the general "big picture" (API) with "local street smarts" (Data Mining).
 
-- Dataset loading and validation
-- Feature-column discovery for model training
-- Time-based split and metric calculation (RMSE, MAE, R2, MAPE)
-- Local model training and artifact packaging
-- Historical replay generation
-- Recursive weather-driven forecasting
-- Day-of-week and hour fallback profile for extended horizon
+### "How does the 'Mining' work?"
+Imagine you have a big pile of sentences. Our "Detective" script (`location_mining.py`) scans every sentence for keywords like *"Quận Cầu Giấy"* or *"Huyện Thanh Trì"*. It then counts these occurrences to figure out where the "danger zones" for dust are.
 
-### 2. Local Training and Artifacts
+### "What is the 'History-based' line?"
+In the future planner, we show two lines for fun.
+- The **Main Forecast** uses the latest live sensors.
+- The **History-based line** shows what the AI *thinks* would happen based purely on its training from past years. It’s a way to see how much our "past memories" still apply to today's weather.
 
-Implemented in `main/hanoi_pm25_forecast.py`:
-
-- Trains `LinearRegression` on numeric engineered features (excluding `datetime`, `pm25`, `source`, `season`)
-- Keeps time-based split (`--test-ratio`)
-- Exports `predictions.csv` with columns `datetime`, `actual_pm25`, `forecast_pm25`, `baseline_pred`, `source_label`
-- Exports `model_bundle.joblib` with fitted model, feature list, metrics, local history/test window metadata, and planner fallback profile
-
-### 3. Hybrid Forecasting Web App
-
-Implemented in `web/app.py`:
-
-- Two user modes: `Historical` (local artifact replay) and `Upcoming planner` (30-day hourly planning)
-- Hourly-only selection (`00:00` to `23:00`) to avoid misleading minute behavior
-- Forecast source window 1 (days 0-7): Open-Meteo air-quality API (`pm2_5`)
-- Forecast source window 2 (days 8-16): Open-Meteo weather API + recursive local model forecast
-- Forecast source window 3 (days 17-30): offline day_of_week + hour fallback profile
-- Adds per-row labels: `source_label` and `confidence_label`
-- Graceful degradation: API failures trigger warnings and fallback use
-
-## Current Baseline Results (From Regenerated Artifacts)
-
-Using the current implementation on the same dataset split:
-
-- Persistence baseline: RMSE 7.156, MAE 5.121, R2 0.7903, MAPE 26.85%
-- Local linear model: RMSE 6.701, MAE 4.850, R2 0.8161, MAPE 26.65%
-- Extended fallback profile (day_of_week + hour): RMSE 18.309, MAE 15.361, R2 -0.3729, MAPE 110.87%
-
-Interpretation:
-
-- Local linear model improves over persistence on holdout.
-- Fallback profile is intentionally lower-confidence and used only for outer planner horizon or outage scenarios.
-
-## Evaluation Plan
-
-### Quantitative Evaluation
-
-- Model metrics on time-based holdout: RMSE, MAE, R2, MAPE
-- Comparison target: persistence baseline vs local linear model
-
-### Product-Level Validation
-
-- Historical mode check 1: different hours on the same date must produce different values
-- Historical mode check 2: baseline and actual overlays are shown only when available
-- Planner mode check 1: source labels reflect window logic (0-7, 8-16, 17-30)
-- Planner mode check 2: Tuesday vs Wednesday in fallback window should not be identical by default
-- Reliability check: API outage handling keeps planner functional and explicit about confidence and source
+---
 
 ## Deliverables
 
-- Codebase with shared forecasting core and web app
-- `predictions.csv` and `model_bundle.joblib` artifacts
-- Streamlit app for interactive planning and CSV export
-- Documentation (`README.md`, updated `project_proposal.md`)
+- **Codebase**: Fully commented scripts for mining and forecasting.
+- **Data Bundle**: All CSV files and the trained AI model bundle.
+- **Streamlit App**: The interactive web dashboard.
+- **Documentation**: This proposal and a technical Walkthrough.
 
-## Risks and Mitigation
-
-- Risk: live API downtime or rate issues
-- Mitigation: cached calls, warning messages, offline fallback profile
-- Risk: long-horizon uncertainty
-- Mitigation: explicit confidence labels and source transparency
-- Risk: dataset window ends before current date
-- Mitigation: mode-gated date selection and planner-only future windows
+---
 
 ## Scope Statement
 
-The project prioritizes practical planning support over long-range scientific certainty. The system is designed as a transparent, local-first decision aid rather than a medical or regulatory forecasting tool.
+The project prioritizes **student safety decision-support**. It transforms "abstract data" into "concrete advice" like: *"Don't exercise outside in Thanh Xuân today—it's too dusty."*
