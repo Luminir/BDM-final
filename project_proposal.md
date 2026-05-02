@@ -89,8 +89,6 @@ In the future planner, we show two lines for fun.
 - The **Main Forecast** uses the latest live sensors.
 - The **History-based line** shows what the AI *thinks* would happen based purely on its training from past years. It’s a way to see how much our "past memories" still apply to today's weather.
 
----
-
 ## Deliverables
 
 - **Codebase**: Fully commented scripts for mining and forecasting.
