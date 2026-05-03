@@ -19,7 +19,7 @@ ROOT_DIR = Path(__file__).resolve().parents[1]
 if str(ROOT_DIR) not in sys.path:
     sys.path.append(str(ROOT_DIR))
 
-from main.forecasting_core import (  # noqa: E402
+from main.forecasting_core import (
     apply_dow_hour_profile,
     build_historical_forecast_frame,
     get_safety_recommendations,
