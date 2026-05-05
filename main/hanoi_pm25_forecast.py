@@ -41,7 +41,7 @@ def parse_args() -> argparse.Namespace:
         type=float,
         default=0.2,
         help="Test ratio for time-based split (default: 0.2)",
-    )
+    ) 
     parser.add_argument(
         "--output",
         default="predictions.csv",
@@ -74,18 +74,19 @@ def main() -> int:
     print(f"- Rows: {len(dataset_df):,}")
     print(f"- Columns: {len(dataset_df.columns)}")
     print(
-        f"- Local history window: {model_bundle['local_history_start']} -> {model_bundle['local_history_end']}"
+        f"- Local history window: {model_bundle['local_history_start']} -> {model_bundle['local_history_end']}"                                                                                                                                                                          # type: ignore[index]
     )
     print(
-        f"- Saved forecast window: {model_bundle['test_window_start']} -> {model_bundle['test_window_end']}"
+        f"- Saved forecast window: {model_bundle['test_window_start']} -> {model_bundle['test_window_end']}"                                                                                                                                                                          # type: ignore[index]
     )
-    print(f"- Model feature count: {len(model_bundle['feature_columns'])}")
+    print(f"- Model feature count: {len(model_bundle['feature_columns'])}"                                                                                                                                                                          # type: ignore[arg-type, index]
+    )
     print()
 
     print("Model performance")
-    print(format_metrics("Persistence", model_bundle["metrics"]["baseline"]))
-    print(format_metrics("Local linear model", model_bundle["metrics"]["local_model"]))
-    print(format_metrics("DoW/hour fallback", model_bundle["metrics"]["fallback"]))
+    print(format_metrics("Persistence", model_bundle["metrics"]["baseline"]))                                                                                                                                                                          # type: ignore[index]
+    print(format_metrics("Local linear model", model_bundle["metrics"]["local_model"]))                                                                                                                                                                          # type: ignore[index]
+    print(format_metrics("DoW/hour fallback", model_bundle["metrics"]["fallback"]))                                                                                                                       # type: ignore[index]
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     predictions_df.to_csv(output_path, index=False)

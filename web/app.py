@@ -94,7 +94,7 @@ def safe_mtime(path: Path) -> float:
     return path.stat().st_mtime
 
 
-def format_date_label(value: pd.Timestamp | object) -> str:
+def format_date_label(value: pd.Timestamp) -> str:
     return pd.Timestamp(value).strftime("%A, %d %B %Y")
 
 
@@ -163,11 +163,11 @@ def fetch_open_meteo_air_quality(today_marker: str, forecast_days: int) -> pd.Da
             "forecast_days": forecast_days,
         },
     )
-    hourly = payload.get("hourly", {})
+    hourly = payload.get("hourly", {})  # type: ignore[union-attr]
     df = pd.DataFrame(
         {
-            "datetime": pd.to_datetime(hourly.get("time", [])),
-            "forecast_pm25": pd.to_numeric(hourly.get("pm2_5", []), errors="coerce"),
+            "datetime": pd.to_datetime(hourly.get("time", [])),  # type: ignore[union-attr]
+            "forecast_pm25": pd.to_numeric(hourly.get("pm2_5", []), errors="coerce"),  # type: ignore[union-attr]
         }
     ).dropna(subset=["forecast_pm25"])
     if df.empty:
@@ -192,15 +192,15 @@ def fetch_open_meteo_weather(today_marker: str, forecast_days: int) -> pd.DataFr
             "forecast_days": forecast_days,
         },
     )
-    hourly = payload.get("hourly", {})
-    if "time" not in hourly:
+    hourly = payload.get("hourly", {})  # type: ignore[union-attr]
+    if "time" not in hourly:  # type: ignore[operator]
         raise RuntimeError("Open-Meteo weather response did not include hourly time data.")
-    weather_df = pd.DataFrame({"datetime": pd.to_datetime(hourly["time"])})
+    weather_df = pd.DataFrame({"datetime": pd.to_datetime(hourly["time"])})  # type: ignore[index]
     for api_name, local_name in WEATHER_FIELD_MAP.items():
-        if api_name not in hourly:
+        if api_name not in hourly:  # type: ignore[operator]
             raise RuntimeError(f"Open-Meteo weather response is missing '{api_name}'.")
         weather_df[local_name] = (
-            pd.to_numeric(pd.Series(hourly[api_name]), errors="coerce").fillna(0.0).to_numpy()
+            pd.to_numeric(pd.Series(hourly[api_name]), errors="coerce").fillna(0.0).to_numpy()  # type: ignore[index]
         )
     return weather_df.fillna(0.0)
 
@@ -240,7 +240,7 @@ def build_planner_forecasts(
 ) -> tuple[pd.DataFrame, list[str]]:
     planner_hours = pd.date_range(today, periods=PLANNER_HORIZON_DAYS * 24, freq="h")
     fallback_df = standardize_forecast_frame(
-        apply_dow_hour_profile(planner_hours, model_bundle["planner_profile"]),
+        apply_dow_hour_profile(planner_hours, model_bundle["planner_profile"]),  # type: ignore[arg-type]
         source_label="Offline day-of-week/hour fallback",
         confidence_label="Low confidence",
     )
@@ -279,6 +279,14 @@ def build_planner_forecasts(
         ).rename(columns={"forecast_pm25": "history_model_pm25"})
 
     final_df = overlay_forecasts(fallback_df, overlay_df)
+    if air_df is not None and not air_df.empty:
+        final_df = final_df.merge(
+            air_df[["datetime", "forecast_pm25"]].rename(columns={"forecast_pm25": "open_meteo_api_pm25"}),
+            on="datetime",
+            how="left",
+        )
+    else:
+        final_df["open_meteo_api_pm25"] = np.nan
     if pure_model_df is not None:
         final_df = final_df.merge(pure_model_df[["datetime", "history_model_pm25"]], on="datetime", how="left")
     else:
@@ -296,13 +304,13 @@ def lookup_target(day_df: pd.DataFrame, target_timestamp: pd.Timestamp) -> pd.Se
     exact = day_df.loc[day_df["datetime"] == target_timestamp]
     if not exact.empty:
         return exact.iloc[0]
-    return day_df.loc[(day_df["datetime"] - target_timestamp).abs().idxmin()]
+    return day_df.loc[(day_df["datetime"] - target_timestamp).abs().idxmin()]  # type: ignore[return-value]
 
 
 def build_table(day_df: pd.DataFrame) -> pd.DataFrame:
     table_df = day_df[["datetime", "forecast_pm25", "confidence_label", "source_label"]].copy()
-    table_df["Air quality"] = table_df["forecast_pm25"].map(lambda value: get_air_quality_band(float(value))["label"])
-    table_df["Suggestion"] = table_df["forecast_pm25"].map(lambda value: get_air_quality_band(float(value))["advice"])
+    table_df["Air quality"] = table_df["forecast_pm25"].apply(lambda value: get_air_quality_band(float(value))["label"])
+    table_df["Suggestion"] = table_df["forecast_pm25"].apply(lambda value: get_air_quality_band(float(value))["advice"])
     table_df["Time"] = table_df["datetime"].dt.strftime("%H:%M")
     return table_df[["Time", "forecast_pm25", "Air quality", "confidence_label", "source_label", "Suggestion"]].rename(
         columns={
@@ -316,6 +324,8 @@ def build_table(day_df: pd.DataFrame) -> pd.DataFrame:
 def build_chart(day_df: pd.DataFrame, target_timestamp: pd.Timestamp, show_baseline: bool, show_history_model: bool = False) -> go.Figure:
     figure = go.Figure()
     figure.add_trace(go.Scatter(x=day_df["datetime"], y=day_df["forecast_pm25"], mode="lines+markers", name="Main forecast", line={"color": "#0f766e", "width": 4}))
+    if "open_meteo_api_pm25" in day_df.columns and day_df["open_meteo_api_pm25"].notna().any():
+        figure.add_trace(go.Scatter(x=day_df["datetime"], y=day_df["open_meteo_api_pm25"], mode="lines", name="Open-Meteo API", line={"color": "#0284c7", "dash": "dash", "width": 3}))
     if show_history_model and "history_model_pm25" in day_df.columns and day_df["history_model_pm25"].notna().any():
         figure.add_trace(go.Scatter(x=day_df["datetime"], y=day_df["history_model_pm25"], mode="lines", name="History-based model", line={"color": "#6366f1", "dash": "dot", "width": 3}))
     if day_df["actual_pm25"].notna().any():
@@ -333,22 +343,22 @@ def render_sidebar(
     historical_df: pd.DataFrame,
     model_bundle: dict[str, object],
     today: pd.Timestamp,
-) -> tuple[str, pd.Timestamp, str, bool]:
+) -> tuple[str, pd.Timestamp, str, bool, bool]:
     st.sidebar.markdown("## Planning controls")
     mode = st.sidebar.radio("Mode", ["Historical", "Upcoming planner"], index=1)
 
     if mode == "Historical":
         date_options = sorted(historical_df["datetime"].dt.date.unique())
-        selected_date = st.sidebar.selectbox("Date", date_options, index=date_options.index(pd.Timestamp(model_bundle["local_history_end"]).date()), format_func=format_date_label)
-        day_df = slice_day(historical_df, pd.Timestamp(selected_date))
+        selected_date = st.sidebar.selectbox("Date", date_options, index=date_options.index(pd.Timestamp(model_bundle["local_history_end"]).date()), format_func=format_date_label)  # type: ignore[arg-type]
+        day_df = slice_day(historical_df, pd.Timestamp(selected_date))  # type: ignore[arg-type]
         hour_options = day_df["datetime"].dt.strftime("%H:%M").tolist()
         default_hour = "08:00" if "08:00" in hour_options else hour_options[0]
         selected_hour = st.sidebar.selectbox("Hour", hour_options, index=hour_options.index(default_hour))
         show_baseline = st.sidebar.toggle("Show comparison lines", value=True)
         show_history_model = False
         st.sidebar.info(
-            f"Local dataset: {pd.Timestamp(model_bundle['local_history_start']):%d %b %Y} to {pd.Timestamp(model_bundle['local_history_end']):%d %b %Y}. "
-            f"Saved holdout forecast: {pd.Timestamp(model_bundle['test_window_start']):%d %b %Y} to {pd.Timestamp(model_bundle['test_window_end']):%d %b %Y}."
+            f"Local dataset: {pd.Timestamp(model_bundle['local_history_start']):%d %b %Y} to {pd.Timestamp(model_bundle['local_history_end']):%d %b %Y}. "  # type: ignore[arg-type]
+            f"Saved holdout forecast: {pd.Timestamp(model_bundle['test_window_start']):%d %b %Y} to {pd.Timestamp(model_bundle['test_window_end']):%d %b %Y}."  # type: ignore[arg-type]
         )
     else:
         date_options = [today.date() + pd.Timedelta(days=offset) for offset in range(PLANNER_HORIZON_DAYS)]
@@ -362,10 +372,10 @@ def render_sidebar(
             f"Offline fallback: {(today + pd.Timedelta(days=LIVE_WEATHER_DAYS)):%d %b %Y} to {(today + pd.Timedelta(days=PLANNER_HORIZON_DAYS - 1)):%d %b %Y}."
         )
         st.sidebar.caption(
-            f"The local file ends on {pd.Timestamp(model_bundle['local_history_end']):%d %b %Y}, so dates in the gap before today are intentionally hidden."
+            f"The local file ends on {pd.Timestamp(model_bundle['local_history_end']):%d %b %Y}, so dates in the gap before today are intentionally hidden."  # type: ignore[arg-type]
         )
 
-    return mode, pd.Timestamp(selected_date), selected_hour, show_baseline, show_history_model
+    return mode, pd.Timestamp(selected_date), selected_hour, show_baseline, show_history_model  # type: ignore[arg-type]
 
 
 def render_district_selector() -> str:
@@ -423,11 +433,11 @@ def main() -> None:
 
     st.title("Hanoi Air Planner")
     st.write(
-        f"Local history runs through {pd.Timestamp(model_bundle['local_history_end']):%d %b %Y}. "
+        f"Local history runs through {pd.Timestamp(model_bundle['local_history_end']):%d %b %Y}. "  # type: ignore[arg-type]
         f"The upcoming planner covers {today:%d %b %Y} to {(today + pd.Timedelta(days=PLANNER_HORIZON_DAYS - 1)):%d %b %Y} with source-aware hourly forecasts."
     )
 
-    mode, selected_date, selected_hour, show_baseline, show_history_model = render_sidebar(historical_df, model_bundle, today)
+    mode, selected_date, selected_hour, show_baseline, show_history_model = render_sidebar(historical_df, model_bundle, today)  # type: ignore[misc]
     selected_district = render_district_selector()
     selected_timestamp = build_target_timestamp(selected_date, selected_hour)
     day_df = slice_day(historical_df if mode == "Historical" else planner_df, selected_date)
@@ -481,10 +491,11 @@ def main() -> None:
     st.plotly_chart(build_chart(day_df, selected_timestamp, show_baseline, show_history_model), use_container_width=True)
 
     st.subheader("Forecast engines")
+    metrics: dict[str, object] = model_bundle["metrics"]  # type: ignore[assignment]
     metric_rows = [
-        {"Model": "Local linear model", "Use case": "Historical dataset rows", "RMSE": round(model_bundle["metrics"]["local_model"]["RMSE"], 3), "MAE": round(model_bundle["metrics"]["local_model"]["MAE"], 3), "Accuracy note": f"R2 = {model_bundle['metrics']['local_model']['R2']:.4f}"},
-        {"Model": "Lag-1 baseline", "Use case": "Reference benchmark", "RMSE": round(model_bundle["metrics"]["baseline"]["RMSE"], 3), "MAE": round(model_bundle["metrics"]["baseline"]["MAE"], 3), "Accuracy note": f"R2 = {model_bundle['metrics']['baseline']['R2']:.4f}"},
-        {"Model": "Day-of-week/hour fallback", "Use case": "Planner days 17-30 and offline fallback", "RMSE": round(model_bundle["metrics"]["fallback"]["RMSE"], 3), "MAE": round(model_bundle["metrics"]["fallback"]["MAE"], 3), "Accuracy note": f"R2 = {model_bundle['metrics']['fallback']['R2']:.4f}"},
+        {"Model": "Local linear model", "Use case": "Historical dataset rows", "RMSE": round(metrics["local_model"]["RMSE"], 3), "MAE": round(metrics["local_model"]["MAE"], 3), "Accuracy note": f"R2 = {metrics['local_model']['R2']:.4f}"},  # type: ignore[index]
+        {"Model": "Lag-1 baseline", "Use case": "Reference benchmark", "RMSE": round(metrics["baseline"]["RMSE"], 3), "MAE": round(metrics["baseline"]["MAE"], 3), "Accuracy note": f"R2 = {metrics['baseline']['R2']:.4f}"},  # type: ignore[index]
+        {"Model": "Day-of-week/hour fallback", "Use case": "Planner days 17-30 and offline fallback", "RMSE": round(metrics["fallback"]["RMSE"], 3), "MAE": round(metrics["fallback"]["MAE"], 3), "Accuracy note": f"R2 = {metrics['fallback']['R2']:.4f}"},  # type: ignore[index]
         {"Model": "Open-Meteo live AQI", "Use case": "Planner near term", "RMSE": np.nan, "MAE": np.nan, "Accuracy note": "Direct external forecast source"},
     ]
     st.dataframe(pd.DataFrame(metric_rows), use_container_width=True, hide_index=True)

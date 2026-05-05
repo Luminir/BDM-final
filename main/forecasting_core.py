@@ -146,11 +146,11 @@ def apply_dow_hour_profile(
     forecast_df = pd.DataFrame({"datetime": pd.to_datetime(target_datetimes)})
     forecast_df["day_of_week"] = forecast_df["datetime"].dt.dayofweek
     forecast_df["hour"] = forecast_df["datetime"].dt.hour
-    profile = profile_bundle["dow_hour_profile"]
-    global_mean = float(profile_bundle["global_mean"])
+    profile = profile_bundle["dow_hour_profile"]  # type: ignore[index]
+    global_mean = float(profile_bundle["global_mean"])  # type: ignore[arg-type, index]
 
     forecast_df["forecast_pm25"] = [
-        float(profile.get((day_of_week, hour), global_mean))
+        float(profile.get((day_of_week, hour), global_mean))  # type: ignore[union-attr]
         for day_of_week, hour in zip(forecast_df["day_of_week"], forecast_df["hour"])
     ]
     return forecast_df[["datetime", "forecast_pm25"]]
@@ -227,13 +227,13 @@ def predict_local_model(
     feature_df: pd.DataFrame,
     model_bundle: dict[str, object],
 ) -> np.ndarray:
-    feature_columns = model_bundle["feature_columns"]
-    missing_columns = [column for column in feature_columns if column not in feature_df.columns]
+    feature_columns = model_bundle["feature_columns"]  # type: ignore[index]
+    missing_columns = [column for column in feature_columns if column not in feature_df.columns]  # type: ignore[union-attr]
     if missing_columns:
         missing_text = ", ".join(sorted(missing_columns))
         raise KeyError(f"Feature frame is missing model columns: {missing_text}")
 
-    prediction_values = model_bundle["model"].predict(feature_df[feature_columns])
+    prediction_values = model_bundle["model"].predict(feature_df[feature_columns])  # type: ignore[attr-defined, index]
     return np.clip(np.asarray(prediction_values, dtype=float), 0, None)
 
 
@@ -434,41 +434,41 @@ def recursive_weather_forecast(
     forecast_rows: list[dict[str, object]] = []
 
     for row in prepared_weather.itertuples(index=False):
-        current_timestamp = pd.Timestamp(row.datetime)
+        current_timestamp = pd.Timestamp(row.datetime)  # type: ignore[arg-type]
         known_pm25 = fixed_lookup.get(current_timestamp)
 
         if known_pm25 is None:
             feature_payload = {
-                "temperature": float(row.temperature),
-                "humidity": float(row.humidity),
-                "dew_point": float(row.dew_point),
-                "precipitation": float(row.precipitation),
-                "rain": float(row.rain),
-                "pressure_msl": float(row.pressure_msl),
-                "surface_pressure": float(row.surface_pressure),
-                "cloud_cover": float(row.cloud_cover),
-                "wind_speed": float(row.wind_speed),
-                "wind_direction": float(row.wind_direction),
-                "wind_gusts": float(row.wind_gusts),
-                "year": int(row.year),
-                "month": int(row.month),
-                "day": int(row.day),
-                "hour": int(row.hour),
-                "day_of_week": int(row.day_of_week),
-                "is_weekend": int(row.is_weekend),
-                "is_dry_season": int(row.is_dry_season),
+                "temperature": float(row.temperature),  # type: ignore[arg-type]
+                "humidity": float(row.humidity),  # type: ignore[arg-type]
+                "dew_point": float(row.dew_point),  # type: ignore[arg-type]
+                "precipitation": float(row.precipitation),  # type: ignore[arg-type]
+                "rain": float(row.rain),  # type: ignore[arg-type]
+                "pressure_msl": float(row.pressure_msl),  # type: ignore[arg-type]
+                "surface_pressure": float(row.surface_pressure),  # type: ignore[arg-type]
+                "cloud_cover": float(row.cloud_cover),  # type: ignore[arg-type]
+                "wind_speed": float(row.wind_speed),  # type: ignore[arg-type]
+                "wind_direction": float(row.wind_direction),  # type: ignore[arg-type]
+                "wind_gusts": float(row.wind_gusts),  # type: ignore[arg-type]
+                "year": int(row.year),  # type: ignore[arg-type]
+                "month": int(row.month),  # type: ignore[arg-type]
+                "day": int(row.day),  # type: ignore[arg-type]
+                "hour": int(row.hour),  # type: ignore[arg-type]
+                "day_of_week": int(row.day_of_week),  # type: ignore[arg-type]
+                "is_weekend": int(row.is_weekend),  # type: ignore[arg-type]
+                "is_dry_season": int(row.is_dry_season),  # type: ignore[arg-type]
                 "pm25_lag1": float(rolling_window[-1]),
                 "pm25_lag24": float(rolling_window[-24]),
                 "pm25_lag168": float(rolling_window[-168]),
-                "pm25_rolling_3h": float(np.mean(rolling_window[-3:])),
-                "pm25_rolling_24h": float(np.mean(rolling_window[-24:])),
-                "pm25_rolling_7d": float(np.mean(rolling_window[-168:])),
-                "pm25_rolling_24h_std": float(np.std(rolling_window[-24:], ddof=0)),
-                "wind_u": float(row.wind_u),
-                "wind_v": float(row.wind_v),
-                "temp_humidity": float(row.temp_humidity),
-                "pressure_diff": float(row.pressure_diff),
-                "is_raining": int(row.is_raining),
+                "pm25_rolling_3h": float(np.mean(rolling_window[-3:])),  # type: ignore[arg-type]
+                "pm25_rolling_24h": float(np.mean(rolling_window[-24:])),  # type: ignore[arg-type]
+                "pm25_rolling_7d": float(np.mean(rolling_window[-168:])),  # type: ignore[arg-type]
+                "pm25_rolling_24h_std": float(np.std(rolling_window[-24:], ddof=0)),  # type: ignore[arg-type]
+                "wind_u": float(row.wind_u),  # type: ignore[arg-type]
+                "wind_v": float(row.wind_v),  # type: ignore[arg-type]
+                "temp_humidity": float(row.temp_humidity),  # type: ignore[arg-type]
+                "pressure_diff": float(row.pressure_diff),  # type: ignore[arg-type]
+                "is_raining": int(row.is_raining),  # type: ignore[arg-type]
             }
             feature_frame = pd.DataFrame([feature_payload])
             known_pm25 = float(predict_local_model(feature_frame, model_bundle)[0])
